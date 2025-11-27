@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Sistema de apresentações para igreja - Controle de projetor com imagens, vídeos, textos, Bíblia e Hinário">
+  <title>Telão Igreja - Sistema de Apresentações</title>
+  <link rel="icon" type="image/png" href="./images/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #3b82f6;
+      --primary-dark: #2563eb;
+      --primary-light: #60a5fa;
+      --background: #0f172a;
+      --background-card: #1e293b;
+      --foreground: #f8fafc;
+      --muted: #94a3b8;
+      --border: #334155;
+      --destructive: #ef4444;
+      --success: #22c55e;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, var(--background) 0%, #1a1a2e 50%, var(--background) 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      color: var(--foreground);
+    }
+    
+    .container {
+      width: 100%;
+      max-width: 420px;
+    }
+    
+    .card {
+      background: var(--background-card);
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      border: 1px solid var(--border);
+    }
+    
+    .logo-container {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    
+    .logo-icon {
+      width: 64px;
+      height: 64px;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1rem;
+    }
+    
+    .logo-icon svg {
+      width: 32px;
+      height: 32px;
+      color: white;
+    }
+    
+    .logo-container h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--foreground);
+      margin-bottom: 0.25rem;
+    }
+    
+    .logo-container p {
+      font-size: 0.875rem;
+      color: var(--muted);
+    }
+    
+    .error-message {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      margin-bottom: 1.5rem;
+      display: none;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    
+    .error-message.show {
+      display: flex;
+    }
+    
+    .error-message svg {
+      width: 20px;
+      height: 20px;
+      color: var(--destructive);
+      flex-shrink: 0;
+    }
+    
+    .error-message span {
+      font-size: 0.875rem;
+      color: var(--destructive);
+    }
+    
+    .success-message {
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      margin-bottom: 1.5rem;
+      display: none;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    
+    .success-message.show {
+      display: flex;
+    }
+    
+    .success-message svg {
+      width: 20px;
+      height: 20px;
+      color: var(--success);
+      flex-shrink: 0;
+    }
+    
+    .success-message span {
+      font-size: 0.875rem;
+      color: var(--success);
+    }
+    
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+    
+    .form-group label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--foreground);
+      margin-bottom: 0.5rem;
+    }
+    
+    .input-wrapper {
+      position: relative;
+    }
+    
+    .input-wrapper svg {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 18px;
+      height: 18px;
+      color: var(--muted);
+    }
+    
+    .input-wrapper input {
+      width: 100%;
+      height: 44px;
+      padding: 0 12px 0 42px;
+      background: var(--background);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--foreground);
+      font-size: 0.9375rem;
+      transition: all 0.2s ease;
+    }
+    
+    .input-wrapper input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+    
+    .input-wrapper input::placeholder {
+      color: var(--muted);
+    }
+    
+    .password-toggle {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+    }
+    
+    .password-toggle svg {
+      position: static;
+      transform: none;
+      color: var(--muted);
+      transition: color 0.2s ease;
+    }
+    
+    .password-toggle:hover svg {
+      color: var(--foreground);
+    }
+    
+    .form-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+    }
+    
+    .remember-me {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .remember-me input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
+    
+    .remember-me label {
+      font-size: 0.875rem;
+      color: var(--muted);
+      cursor: pointer;
+    }
+    
+    .forgot-link {
+      font-size: 0.8125rem;
+      color: var(--primary-light);
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+    
+    .forgot-link:hover {
+      color: var(--primary);
+      text-decoration: underline;
+    }
+    
+    .btn-primary {
+      width: 100%;
+      height: 44px;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: all 0.2s ease;
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
+    }
+    
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+    
+    .btn-primary:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .btn-primary svg {
+      width: 18px;
+      height: 18px;
+    }
+    
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .register-link {
+      text-align: center;
+      margin-top: 1.5rem;
+      font-size: 0.875rem;
+      color: var(--muted);
+    }
+    
+    .register-link a {
+      color: var(--primary-light);
+      text-decoration: none;
+      font-weight: 500;
+    }
+    
+    .register-link a:hover {
+      text-decoration: underline;
+    }
+    
+    .divider {
+      display: flex;
+      align-items: center;
+      margin: 1.5rem 0;
+    }
+    
+    .divider::before,
+    .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+    
+    .divider span {
+      padding: 0 1rem;
+      font-size: 0.8125rem;
+      color: var(--muted);
+    }
+    
+    .btn-demo {
+      width: 100%;
+      height: 44px;
+      background: transparent;
+      color: var(--primary-light);
+      border: 1px solid var(--primary);
+      border-radius: 8px;
+      font-size: 0.9375rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: all 0.2s ease;
+    }
+    
+    .btn-demo:hover {
+      background: rgba(59, 130, 246, 0.1);
+    }
+    
+    .btn-demo svg {
+      width: 18px;
+      height: 18px;
+    }
+    
+    /* App Container - Hidden by default */
+    .app-container {
+      display: none;
+      width: 100%;
+      max-width: 1200px;
+    }
+    
+    .app-container.show {
+      display: block;
+    }
+    
+    .app-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem;
+      background: var(--background-card);
+      border-radius: 12px;
+      margin-bottom: 1.5rem;
+      border: 1px solid var(--border);
+    }
+    
+    .app-header h2 {
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+    
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    
+    .user-info span {
+      font-size: 0.875rem;
+      color: var(--muted);
+    }
+    
+    .btn-logout {
+      padding: 0.5rem 1rem;
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--destructive);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 6px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .btn-logout:hover {
+      background: rgba(239, 68, 68, 0.2);
+    }
+    
+    .app-content {
+      background: var(--background-card);
+      border-radius: 12px;
+      padding: 2rem;
+      border: 1px solid var(--border);
+      text-align: center;
+    }
+    
+    .app-content h3 {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    
+    .app-content p {
+      color: var(--muted);
+      margin-bottom: 1.5rem;
+    }
+    
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+    
+    .feature-card {
+      background: var(--background);
+      border-radius: 8px;
+      padding: 1.5rem;
+      text-align: center;
+      border: 1px solid var(--border);
+    }
+    
+    .feature-card svg {
+      width: 40px;
+      height: 40px;
+      color: var(--primary);
+      margin-bottom: 0.75rem;
+    }
+    
+    .feature-card h4 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+    
+    .feature-card p {
+      font-size: 0.8125rem;
+      color: var(--muted);
+      margin: 0;
+    }
+    
+    /* Hide login when app is shown */
+    body.logged-in .container {
+      display: none;
+    }
+    
+    body.logged-in .app-container {
+      display: block;
+    }
+    
+    @media (max-width: 480px) {
+      .card {
+        padding: 1.5rem;
+      }
+      
+      .form-row {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Login Container -->
+  <div class="container" id="loginContainer">
+    <div class="card">
+      <div class="logo-container">
+        <div class="logo-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+          </svg>
+        </div>
+        <h1>Telão Igreja</h1>
+        <p>Entre na sua conta para continuar</p>
+      </div>
+      
+      <div class="error-message" id="errorMessage">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+        <span id="errorText">Erro ao fazer login</span>
+      </div>
+      
+      <div class="success-message" id="successMessage">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span id="successText">Login realizado com sucesso!</span>
+      </div>
+      
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="email">Email ou Nome de Usuário</label>
+          <div class="input-wrapper">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            <input type="text" id="email" name="email" placeholder="seu@email.com ou usuario" required data-testid="input-email">
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="password">Senha</label>
+          <div class="input-wrapper">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            <input type="password" id="password" name="password" placeholder="Digite sua senha" required data-testid="input-password">
+            <button type="button" class="password-toggle" id="togglePassword" data-testid="button-toggle-password">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" id="eyeIcon">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="remember-me">
+            <input type="checkbox" id="rememberMe" data-testid="checkbox-remember">
+            <label for="rememberMe">Lembrar-me</label>
+          </div>
+          <a href="#" class="forgot-link" onclick="showForgotPassword()">Esqueceu a senha?</a>
+        </div>
+        
+        <button type="submit" class="btn-primary" id="loginBtn" data-testid="button-login">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+          </svg>
+          Entrar
+        </button>
+      </form>
+      
+      <div class="divider">
+        <span>ou</span>
+      </div>
+      
+      <button type="button" class="btn-demo" onclick="enterDemo()" data-testid="button-demo">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        Entrar como Visitante
+      </button>
+      
+      <p class="register-link">
+        Não tem uma conta? <a href="#" onclick="showRegister()">Cadastre-se</a>
+      </p>
+    </div>
+  </div>
+  
+  <!-- App Container (shown after login) -->
+  <div class="app-container" id="appContainer">
+    <div class="app-header">
+      <h2>Telão Igreja</h2>
+      <div class="user-info">
+        <span id="userName">Usuário</span>
+        <button class="btn-logout" onclick="logout()" data-testid="button-logout">Sair</button>
+      </div>
+    </div>
+    
+    <div class="app-content">
+      <h3>Bem-vindo ao Sistema!</h3>
+      <p>Sistema de apresentações para igreja pronto para uso.</p>
+      
+      <div class="features-grid">
+        <div class="feature-card">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          <h4>Imagens</h4>
+          <p>Exiba fotos e slides</p>
+        </div>
+        
+        <div class="feature-card">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+          </svg>
+          <h4>Vídeos</h4>
+          <p>Reproduza vídeos no projetor</p>
+        </div>
+        
+        <div class="feature-card">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+          </svg>
+          <h4>Bíblia</h4>
+          <p>Acesse versículos rapidamente</p>
+        </div>
+        
+        <div class="feature-card">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+          </svg>
+          <h4>Hinário</h4>
+          <p>Hinos e letras de músicas</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // Default demo users (stored in localStorage for GitHub Pages)
+    const DEFAULT_USERS = [
+      { email: 'admin@igreja.com', username: 'admin', password: 'admin123', role: 'admin' },
+      { email: 'usuario@igreja.com', username: 'usuario', password: 'user123', role: 'user' }
+    ];
+    
+    // Initialize users in localStorage if not exists
+    function initUsers() {
+      if (!localStorage.getItem('users')) {
+        localStorage.setItem('users', JSON.stringify(DEFAULT_USERS));
+      }
+    }
+    
+    // Get users from localStorage
+    function getUsers() {
+      initUsers();
+      return JSON.parse(localStorage.getItem('users') || '[]');
+    }
+    
+    // Check if already logged in
+    function checkAuth() {
+      const user = localStorage.getItem('currentUser');
+      if (user) {
+        showApp(JSON.parse(user));
+      }
+    }
+    
+    // Show app after login
+    function showApp(user) {
+      document.body.classList.add('logged-in');
+      document.getElementById('userName').textContent = user.username || user.email;
+    }
+    
+    // Logout
+    function logout() {
+      localStorage.removeItem('currentUser');
+      document.body.classList.remove('logged-in');
+      document.getElementById('loginForm').reset();
+      hideMessages();
+    }
+    
+    // Toggle password visibility
+    document.getElementById('togglePassword').addEventListener('click', function() {
+      const passwordInput = document.getElementById('password');
+      const eyeIcon = document.getElementById('eyeIcon');
+      
+      if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        eyeIcon.innerHTML = `
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+        `;
+      } else {
+        passwordInput.type = 'password';
+        eyeIcon.innerHTML = `
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+        `;
+      }
+    });
+    
+    // Show error message
+    function showError(message) {
+      document.getElementById('successMessage').classList.remove('show');
+      document.getElementById('errorText').textContent = message;
+      document.getElementById('errorMessage').classList.add('show');
+    }
+    
+    // Show success message
+    function showSuccess(message) {
+      document.getElementById('errorMessage').classList.remove('show');
+      document.getElementById('successText').textContent = message;
+      document.getElementById('successMessage').classList.add('show');
+    }
+    
+    // Hide all messages
+    function hideMessages() {
+      document.getElementById('errorMessage').classList.remove('show');
+      document.getElementById('successMessage').classList.remove('show');
+    }
+    
+    // Login form submission
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const rememberMe = document.getElementById('rememberMe').checked;
+      const loginBtn = document.getElementById('loginBtn');
+      
+      // Disable button and show loading
+      loginBtn.disabled = true;
+      loginBtn.innerHTML = '<div class="spinner"></div> Entrando...';
+      
+      // Simulate API call delay
+      setTimeout(function() {
+        const users = getUsers();
+        const user = users.find(u => 
+          (u.email === email || u.username === email) && u.password === password
+        );
+        
+        if (user) {
+          showSuccess('Login realizado com sucesso!');
+          
+          // Save remember me preference
+          if (rememberMe) {
+            localStorage.setItem('rememberedEmail', email);
+          } else {
+            localStorage.removeItem('rememberedEmail');
+          }
+          
+          // Save current user
+          localStorage.setItem('currentUser', JSON.stringify(user));
+          
+          setTimeout(function() {
+            showApp(user);
+            hideMessages();
+          }, 500);
+        } else {
+          showError('Email/usuário ou senha incorretos');
+          loginBtn.disabled = false;
+          loginBtn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+            </svg>
+            Entrar
+          `;
+        }
+      }, 800);
+    });
+    
+    // Enter as demo/guest user
+    function enterDemo() {
+      const demoUser = { username: 'Visitante', email: 'visitante@demo.com', role: 'guest' };
+      localStorage.setItem('currentUser', JSON.stringify(demoUser));
+      showSuccess('Entrando como visitante...');
+      setTimeout(function() {
+        showApp(demoUser);
+        hideMessages();
+      }, 500);
+    }
+    
+    // Show forgot password message
+    function showForgotPassword() {
+      alert('Para recuperar sua senha, entre em contato com o administrador da sua igreja.');
+    }
+    
+    // Show register message
+    function showRegister() {
+      alert('Para criar uma conta, entre em contato com o administrador da sua igreja.');
+    }
+    
+    // Load remembered email
+    function loadRememberedEmail() {
+      const rememberedEmail = localStorage.getItem('rememberedEmail');
+      if (rememberedEmail) {
+        document.getElementById('email').value = rememberedEmail;
+        document.getElementById('rememberMe').checked = true;
+      }
+    }
+    
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      initUsers();
+      loadRememberedEmail();
+      checkAuth();
+    });
+  </script>
+</body>
+</html>
