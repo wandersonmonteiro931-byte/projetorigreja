@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Telão - Sistema de Projeção</title>
+  <link rel="icon" type="image/png" href="./images/favicon.png">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: #000; font-family: 'Arial', sans-serif; }
+
+    .projector {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .projector-content {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .projector-content img,
+    .projector-content video {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    .projector-content img.cover,
+    .projector-content video.cover {
+      object-fit: cover;
+      width: 100%;
+      height: 100%;
+    }
+
+    .projector-content img.fill,
+    .projector-content video.fill {
+      object-fit: fill;
+      width: 100%;
+      height: 100%;
+    }
+
+    .waiting-screen {
+      text-align: center;
+      padding: 2rem;
+    }
+
+    .waiting-screen h1 {
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+
+    .waiting-screen p {
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 1.25rem;
+    }
+
+    .text-display {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem;
+    }
+
+    .text-display-content {
+      text-align: center;
+      font-size: 72px;
+      font-weight: bold;
+      line-height: 1.4;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      max-width: 90%;
+    }
+
+    .fullscreen-hint {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: rgba(0, 0, 0, 0.85);
+      color: white;
+      padding: 0.75rem 1.25rem;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+    }
+
+    .fullscreen-hint.show { opacity: 1; }
+    .hide-cursor { cursor: none; }
+  </style>
+</head>
+<body>
+  <div class="projector" id="projector">
+    <div class="projector-content" id="projectorContent">
+      <div class="waiting-screen">
+        <h1>EQUIPE DA MÍDIA</h1>
+        <p>MODO ESPERA - AGUARDANDO CONTEÚDO</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="fullscreen-hint" id="fullscreenHint">Pressione F para tela cheia</div>
+
+  <script>
+    let currentItem = null;
+    let showProjector = true;
+    let darkScreen = false;
+    let blackScreen = false;
+    let fitMode = 'contain';
+    let zoom = 1;
+    let panX = 0;
+    let panY = 0;
+    let volume = 80;
+    let muted = false;
+    let isLive = false;
+    let loop = true;
+    let waitingTitle = 'EQUIPE DA MÍDIA';
+    let waitingSub = 'MODO ESPERA - AGUARDANDO CONTEÚDO';
+
+    const projectorContent = document.getElementById('projectorContent');
+    const fullscreenHint = document.getElementById('fullscreenHint');
+
+    function goFullscreen() {
+      const elem = document.documentElement;
+      if (elem.requestFullscreen) {
+        elem.requestFullscreen({ navigationUI: "hide" }).catch(console.error);
+      } else if (elem.webkitRequestFullscreen) {
+        elem.webkitRequestFullscreen();
+      } else if (elem.mozRequestFullScreen) {
+        elem.mozRequestFullScreen();
+      } else if (elem.msRequestFullscreen) {
+        elem.msRequestFullscreen();
+      }
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('fullscreen') === 'true') {
+      setTimeout(goFullscreen, 100);
+      setTimeout(goFullscreen, 500);
+      setTimeout(goFullscreen, 1000);
+      fullscreenHint.classList.add('show');
+      setTimeout(() => fullscreenHint.classList.remove('show'), 4000);
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key.toLowerCase() === 'f') {
+        e.preventDefault();
+        goFullscreen();
+      } else if (e.key === 'ArrowRight') {
+        if (window.opener) window.opener.postMessage({ type: 'next' }, '*');
+      } else if (e.key === 'ArrowLeft') {
+        if (window.opener) window.opener.postMessage({ type: 'previous' }, '*');
+      } else if (e.key === 'Escape') {
+        if (document.fullscreenElement) document.exitFullscreen();
+      }
+    });
+
+    let cursorTimeout;
+    function showCursor() {
+      document.body.classList.remove('hide-cursor');
+      clearTimeout(cursorTimeout);
+      cursorTimeout = setTimeout(() => document.body.classList.add('hide-cursor'), 3000);
+    }
+    document.addEventListener('mousemove', showCursor);
+    showCursor();
+
+    function render() {
+      if (blackScreen) {
+        projectorContent.innerHTML = '';
+        return;
+      }
+
+      if (darkScreen || !showProjector) {
+        projectorContent.innerHTML = `<div class="waiting-screen"><h1>${waitingTitle}</h1><p>${waitingSub}</p></div>`;
+        return;
+      }
+
+      if (!isLive) {
+        projectorContent.innerHTML = `<div class="waiting-screen"><h1>INICIE A APRESENTAÇÃO</h1><p>Clique em "Iniciar Apresentação" no painel de controle</p></div>`;
+        return;
+      }
+
+      if (!currentItem) {
+        projectorContent.innerHTML = `<div class="waiting-screen"><h1>${waitingTitle}</h1><p>${waitingSub}</p></div>`;
+        return;
+      }
+
+      const item = currentItem;
+      const fitClass = fitMode === 'cover' ? 'cover' : fitMode === 'stretch' ? 'fill' : '';
+
+      if (item.type === 'image') {
+        projectorContent.innerHTML = `<img src="${item.url}" alt="${item.name || ''}" class="${fitClass}" style="transform: scale(${zoom}) translate(${panX}%, ${panY}%);">`;
+      } else if (item.type === 'video') {
+        projectorContent.innerHTML = `<video src="${item.url}" class="${fitClass}" style="transform: scale(${zoom}) translate(${panX}%, ${panY}%);" autoplay></video>`;
+        const video = projectorContent.querySelector('video');
+        if (video) {
+          video.volume = volume / 100;
+          video.muted = muted;
+          video.loop = loop;
+        }
+      } else if (item.type === 'text') {
+        const bgColor = item.bgColor || '#FFFFFF';
+        const textColor = item.textColor || '#000000';
+        const content = item.content || '';
+        projectorContent.innerHTML = `<div class="text-display" style="background-color: ${bgColor};"><div class="text-display-content" style="color: ${textColor};">${content}</div></div>`;
+      }
+    }
+
+    window.addEventListener('message', (e) => {
+      if (e.data.type === 'update') {
+        const d = e.data.data;
+        currentItem = d.item;
+        showProjector = d.showProjector;
+        darkScreen = d.darkScreen;
+        blackScreen = d.blackScreen || false;
+        fitMode = d.fitMode || 'contain';
+        zoom = d.zoom || 1;
+        panX = d.panX || 0;
+        panY = d.panY || 0;
+        volume = d.volume || 80;
+        muted = d.muted || false;
+        isLive = d.isLive || false;
+        loop = d.loop !== undefined ? d.loop : true;
+        waitingTitle = d.waitingMessageTitle || 'EQUIPE DA MÍDIA';
+        waitingSub = d.waitingMessageSubtitle || 'MODO ESPERA - AGUARDANDO CONTEÚDO';
+        render();
+      } else if (e.data.type === 'visibility') {
+        showProjector = e.data.data.showProjector;
+        render();
+      } else if (e.data.type === 'requestFullscreen') {
+        goFullscreen();
+      }
+    });
+
+    if (window.opener) {
+      window.opener.postMessage({ type: 'projectorReady' }, '*');
+    }
+
+    render();
+  </script>
+</body>
+</html>
