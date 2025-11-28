@@ -1,0 +1,2035 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Sistema de Projeção para Igreja - Equipe da Mídia">
+  <title>Sistema de Projeção - Equipe da Mídia</title>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+  <style>
+    :root {
+      --background: hsl(0, 0%, 100%);
+      --foreground: hsl(240, 5%, 6%);
+      --border: hsl(240, 6%, 90%);
+      --card: hsl(0, 0%, 98%);
+      --card-foreground: hsl(240, 5%, 8%);
+      --primary: hsl(262, 83%, 58%);
+      --primary-foreground: hsl(0, 0%, 98%);
+      --secondary: hsl(240, 5%, 92%);
+      --secondary-foreground: hsl(240, 10%, 10%);
+      --muted: hsl(240, 5%, 94%);
+      --muted-foreground: hsl(240, 4%, 46%);
+      --accent: hsl(240, 5%, 94%);
+      --accent-foreground: hsl(240, 6%, 10%);
+      --destructive: hsl(0, 84%, 60%);
+      --destructive-foreground: hsl(0, 0%, 98%);
+      --input: hsl(240, 6%, 80%);
+      --ring: hsl(262, 83%, 58%);
+      --radius: 0.5rem;
+      --font-sans: 'Open Sans', sans-serif;
+    }
+
+    .dark {
+      --background: hsl(240, 6%, 6%);
+      --foreground: hsl(0, 0%, 98%);
+      --border: hsl(240, 5%, 16%);
+      --card: hsl(240, 5%, 8%);
+      --card-foreground: hsl(0, 0%, 98%);
+      --primary: hsl(262, 83%, 58%);
+      --primary-foreground: hsl(0, 0%, 98%);
+      --secondary: hsl(240, 5%, 16%);
+      --secondary-foreground: hsl(0, 0%, 98%);
+      --muted: hsl(240, 5%, 14%);
+      --muted-foreground: hsl(240, 5%, 64%);
+      --accent: hsl(240, 5%, 14%);
+      --accent-foreground: hsl(0, 0%, 98%);
+      --destructive: hsl(0, 84%, 60%);
+      --destructive-foreground: hsl(0, 0%, 98%);
+      --input: hsl(240, 5%, 26%);
+      --ring: hsl(262, 83%, 58%);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--background);
+      color: var(--foreground);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    .hidden { display: none !important; }
+    .flex { display: flex; }
+    .flex-col { flex-direction: column; }
+    .flex-wrap { flex-wrap: wrap; }
+    .items-center { align-items: center; }
+    .items-start { align-items: flex-start; }
+    .justify-center { justify-content: center; }
+    .justify-between { justify-content: space-between; }
+    .justify-end { justify-content: flex-end; }
+    .gap-1 { gap: 0.25rem; }
+    .gap-2 { gap: 0.5rem; }
+    .gap-3 { gap: 0.75rem; }
+    .gap-4 { gap: 1rem; }
+    .gap-6 { gap: 1.5rem; }
+    .w-full { width: 100%; }
+    .h-full { height: 100%; }
+    .h-screen { height: 100vh; }
+    .min-h-screen { min-height: 100vh; }
+    .max-w-md { max-width: 28rem; }
+    .max-w-lg { max-width: 32rem; }
+    .max-w-6xl { max-width: 72rem; }
+    .max-w-7xl { max-width: 80rem; }
+    .mx-auto { margin-left: auto; margin-right: auto; }
+    .p-4 { padding: 1rem; }
+    .p-5 { padding: 1.25rem; }
+    .p-6 { padding: 1.5rem; }
+    .p-8 { padding: 2rem; }
+    .px-4 { padding-left: 1rem; padding-right: 1rem; }
+    .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+    .py-3 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+    .mb-1 { margin-bottom: 0.25rem; }
+    .mb-2 { margin-bottom: 0.5rem; }
+    .mb-4 { margin-bottom: 1rem; }
+    .mb-6 { margin-bottom: 1.5rem; }
+    .mb-8 { margin-bottom: 2rem; }
+    .mt-1 { margin-top: 0.25rem; }
+    .mt-2 { margin-top: 0.5rem; }
+    .mt-4 { margin-top: 1rem; }
+    .mt-6 { margin-top: 1.5rem; }
+    .mr-1 { margin-right: 0.25rem; }
+    .mr-2 { margin-right: 0.5rem; }
+    .ml-2 { margin-left: 0.5rem; }
+    .text-center { text-align: center; }
+    .text-right { text-align: right; }
+    .text-xs { font-size: 0.75rem; line-height: 1rem; }
+    .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+    .text-base { font-size: 1rem; line-height: 1.5rem; }
+    .text-lg { font-size: 1.125rem; line-height: 1.75rem; }
+    .text-xl { font-size: 1.25rem; line-height: 1.75rem; }
+    .text-2xl { font-size: 1.5rem; line-height: 2rem; }
+    .text-3xl { font-size: 1.875rem; line-height: 2.25rem; }
+    .font-medium { font-weight: 500; }
+    .font-semibold { font-weight: 600; }
+    .font-bold { font-weight: 700; }
+    .text-muted-foreground { color: var(--muted-foreground); }
+    .text-foreground { color: var(--foreground); }
+    .text-primary { color: var(--primary); }
+    .text-destructive { color: var(--destructive); }
+    .text-green-500 { color: #22c55e; }
+    .text-green-600 { color: #16a34a; }
+    .text-blue-500 { color: #3b82f6; }
+    .text-yellow-500 { color: #eab308; }
+    .text-orange-500 { color: #f97316; }
+    .text-purple-500 { color: #a855f7; }
+    .bg-background { background-color: var(--background); }
+    .bg-card { background-color: var(--card); }
+    .bg-muted { background-color: var(--muted); }
+    .bg-primary { background-color: var(--primary); }
+    .bg-destructive { background-color: var(--destructive); }
+    .border { border: 1px solid var(--border); }
+    .border-b { border-bottom: 1px solid var(--border); }
+    .border-r { border-right: 1px solid var(--border); }
+    .border-t { border-top: 1px solid var(--border); }
+    .rounded-md { border-radius: 0.375rem; }
+    .rounded-lg { border-radius: 0.5rem; }
+    .rounded-full { border-radius: 9999px; }
+    .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05); }
+    .overflow-hidden { overflow: hidden; }
+    .overflow-x-auto { overflow-x: auto; }
+    .overflow-y-auto { overflow-y: auto; }
+    .cursor-pointer { cursor: pointer; }
+    .transition-all { transition: all 0.2s ease; }
+    .transition-colors { transition: color 0.2s ease, background-color 0.2s ease; }
+    .space-y-2 > * + * { margin-top: 0.5rem; }
+    .space-y-3 > * + * { margin-top: 0.75rem; }
+    .space-y-4 > * + * { margin-top: 1rem; }
+    .space-y-5 > * + * { margin-top: 1.25rem; }
+    .space-y-6 > * + * { margin-top: 1.5rem; }
+    .absolute { position: absolute; }
+    .relative { position: relative; }
+    .fixed { position: fixed; }
+    .inset-0 { top: 0; right: 0; bottom: 0; left: 0; }
+    .top-2 { top: 0.5rem; }
+    .top-4 { top: 1rem; }
+    .right-2 { right: 0.5rem; }
+    .right-4 { right: 1rem; }
+    .left-3 { left: 0.75rem; }
+    .bottom-4 { bottom: 1rem; }
+    .z-50 { z-index: 50; }
+    .z-100 { z-index: 100; }
+    .shrink-0 { flex-shrink: 0; }
+    .flex-1 { flex: 1; }
+    .min-w-0 { min-width: 0; }
+    .grid { display: grid; }
+    .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+    .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .inline-flex { display: inline-flex; }
+    .inline { display: inline; }
+    .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .whitespace-nowrap { white-space: nowrap; }
+    .object-cover { object-fit: cover; }
+    .object-contain { object-fit: contain; }
+    .pointer-events-none { pointer-events: none; }
+
+    @media (min-width: 768px) {
+      .md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .md\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .md\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .md\:flex-row { flex-direction: row; }
+      .md\:items-center { align-items: center; }
+      .md\:justify-between { justify-content: space-between; }
+    }
+
+    .bg-gradient-auth {
+      background: linear-gradient(to bottom right, var(--background), var(--muted), var(--background));
+    }
+    .bg-gradient-welcome {
+      background: linear-gradient(to right, rgba(59, 130, 246, 0.1), rgba(168, 85, 247, 0.1));
+    }
+    .bg-gradient-primary {
+      background: linear-gradient(to bottom right, rgba(139, 92, 246, 0.1), rgba(139, 92, 246, 0.05), transparent);
+    }
+
+    .card {
+      background-color: var(--card);
+      color: var(--card-foreground);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+    }
+    .card-auth {
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+      border: 1px solid var(--border);
+      backdrop-filter: blur(4px);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      font-weight: 500;
+      padding: 0.625rem 1rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: none;
+      outline: none;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .btn:focus { outline: 2px solid var(--ring); outline-offset: 2px; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-primary { background-color: var(--primary); color: var(--primary-foreground); }
+    .btn-primary:hover:not(:disabled) { background-color: hsl(262, 83%, 50%); }
+    .btn-secondary { background-color: var(--secondary); color: var(--secondary-foreground); }
+    .btn-secondary:hover:not(:disabled) { background-color: hsl(240, 5%, 85%); }
+    .btn-ghost { background-color: transparent; color: var(--foreground); }
+    .btn-ghost:hover:not(:disabled) { background-color: var(--muted); }
+    .btn-destructive { background-color: var(--destructive); color: var(--destructive-foreground); }
+    .btn-destructive:hover:not(:disabled) { background-color: hsl(0, 84%, 50%); }
+    .btn-outline { background-color: transparent; border: 1px solid var(--border); color: var(--foreground); }
+    .btn-outline:hover:not(:disabled) { background-color: var(--muted); }
+    .btn-lg { padding: 0.75rem 1.5rem; font-size: 1rem; }
+    .btn-sm { padding: 0.375rem 0.75rem; font-size: 0.75rem; }
+    .btn-icon { width: 2.25rem; height: 2.25rem; padding: 0; }
+    .btn-full { width: 100%; }
+    .btn-h-11 { height: 2.75rem; }
+
+    .input {
+      display: block;
+      width: 100%;
+      border-radius: var(--radius);
+      border: 1px solid var(--input);
+      background-color: transparent;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.875rem;
+      color: var(--foreground);
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+    .input:focus { outline: none; border-color: var(--ring); box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2); }
+    .input::placeholder { color: var(--muted-foreground); }
+    .input-h-11 { height: 2.75rem; }
+    .input-with-icon { padding-left: 2.5rem; }
+    .input-with-icon-right { padding-right: 2.5rem; }
+    .input-icon { position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: var(--muted-foreground); width: 1rem; height: 1rem; }
+    .input-icon-btn { position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); color: var(--muted-foreground); background: none; border: none; cursor: pointer; padding: 0; transition: color 0.2s ease; }
+    .input-icon-btn:hover { color: var(--foreground); }
+
+    .select {
+      display: block;
+      width: 100%;
+      border-radius: var(--radius);
+      border: 1px solid var(--input);
+      background-color: var(--background);
+      padding: 0.5rem 2rem 0.5rem 0.75rem;
+      font-size: 0.875rem;
+      color: var(--foreground);
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+      background-position: right 0.5rem center;
+      background-repeat: no-repeat;
+      background-size: 1.5em 1.5em;
+    }
+    .select:focus { outline: none; border-color: var(--ring); }
+    .select-h-11 { height: 2.75rem; }
+
+    .switch-container { display: flex; align-items: center; gap: 0.5rem; }
+    .switch { position: relative; width: 2.75rem; height: 1.5rem; background-color: var(--input); border-radius: 9999px; cursor: pointer; transition: background-color 0.2s ease; border: none; padding: 0; }
+    .switch.active { background-color: var(--primary); }
+    .switch-thumb { position: absolute; top: 0.125rem; left: 0.125rem; width: 1.25rem; height: 1.25rem; background-color: white; border-radius: 9999px; transition: transform 0.2s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .switch.active .switch-thumb { transform: translateX(1.25rem); }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.125rem 0.625rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      border-radius: 9999px;
+      transition: all 0.2s ease;
+    }
+    .badge-default { background-color: var(--primary); color: var(--primary-foreground); }
+    .badge-secondary { background-color: var(--secondary); color: var(--secondary-foreground); }
+    .badge-destructive { background-color: var(--destructive); color: var(--destructive-foreground); }
+    .badge-outline { background-color: transparent; border: 1px solid var(--border); color: var(--foreground); }
+    .badge-success { background-color: rgba(34, 197, 94, 0.1); color: #16a34a; border: 1px solid rgba(34, 197, 94, 0.3); }
+
+    .alert-error {
+      padding: 1rem;
+      border-radius: var(--radius);
+      background-color: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+    }
+    .alert-error-icon { color: var(--destructive); flex-shrink: 0; margin-top: 0.125rem; }
+    .alert-success {
+      padding: 1rem;
+      border-radius: var(--radius);
+      background-color: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.2);
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+    }
+
+    .icon-circle { display: inline-flex; align-items: center; justify-content: center; width: 4rem; height: 4rem; border-radius: 9999px; }
+    .icon-circle-primary { background-color: rgba(139, 92, 246, 0.1); }
+    .icon-circle-green { background-color: rgba(34, 197, 94, 0.1); }
+    .icon-circle-blue { background-color: rgba(59, 130, 246, 0.1); }
+    .icon-circle-destructive { background-color: rgba(239, 68, 68, 0.1); }
+
+    .link { color: var(--primary); text-decoration: none; transition: text-decoration 0.2s ease; }
+    .link:hover { text-decoration: underline; }
+
+    .spinner { width: 1rem; height: 1rem; border: 2px solid rgba(255, 255, 255, 0.3); border-top-color: white; border-radius: 9999px; animation: spin 0.8s linear infinite; }
+    .spinner-lg { width: 2rem; height: 2rem; border-width: 4px; }
+    .spinner-primary { border-color: rgba(139, 92, 246, 0.3); border-top-color: var(--primary); }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .password-strength { display: flex; gap: 0.25rem; }
+    .password-strength-bar { height: 0.25rem; flex: 1; border-radius: 9999px; background-color: var(--border); transition: background-color 0.2s ease; }
+    .password-strength-bar.active-1 { background-color: var(--destructive); }
+    .password-strength-bar.active-2 { background-color: #f97316; }
+    .password-strength-bar.active-3 { background-color: #eab308; }
+    .password-strength-bar.active-4 { background-color: #22c55e; }
+
+    .theme-toggle { width: 2.25rem; height: 2.25rem; padding: 0; border-radius: var(--radius); background-color: transparent; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--foreground); transition: background-color 0.2s ease; }
+    .theme-toggle:hover { background-color: var(--muted); }
+
+    .table { width: 100%; font-size: 0.875rem; border-collapse: collapse; }
+    .table th { text-align: left; padding: 0.75rem; font-weight: 500; color: var(--muted-foreground); border-bottom: 1px solid var(--border); }
+    .table td { padding: 0.75rem; border-bottom: 1px solid var(--border); }
+    .table tr:hover { background-color: var(--muted); }
+    .table-text-right { text-align: right; }
+
+    .tabs { display: flex; gap: 0.5rem; border-bottom: 1px solid var(--border); flex-wrap: wrap; margin-bottom: 1rem; }
+    .tab { padding: 0.5rem 1rem; font-size: 0.875rem; font-weight: 500; border: none; background: none; cursor: pointer; border-bottom: 2px solid transparent; color: var(--muted-foreground); transition: all 0.2s ease; }
+    .tab:hover { color: var(--foreground); }
+    .tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+    .stats-card { display: flex; align-items: center; gap: 0.75rem; }
+    .stats-icon { display: flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; border-radius: var(--radius); }
+
+    .projector-screen { width: 100vw; height: 100vh; background-color: black; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .projector-content { text-align: center; padding: 2rem; }
+    .projector-media { width: 100%; height: 100%; object-fit: contain; }
+    .projector-text { color: white; font-size: 2rem; font-weight: bold; }
+    .projector-subtitle { color: rgba(255, 255, 255, 0.7); font-size: 1.25rem; }
+
+    .slider-container { display: flex; align-items: center; gap: 0.75rem; }
+    .slider { flex: 1; height: 0.5rem; background-color: var(--input); border-radius: 9999px; -webkit-appearance: none; cursor: pointer; }
+    .slider::-webkit-slider-thumb { -webkit-appearance: none; width: 1rem; height: 1rem; border-radius: 9999px; background-color: var(--primary); cursor: pointer; }
+
+    .toast-container { position: fixed; bottom: 1rem; right: 1rem; z-index: 100; display: flex; flex-direction: column; gap: 0.5rem; }
+    .toast { padding: 1rem; border-radius: var(--radius); background-color: var(--card); border: 1px solid var(--border); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); min-width: 16rem; animation: slideIn 0.3s ease; }
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    .toast-title { font-weight: 600; margin-bottom: 0.25rem; }
+    .toast-description { font-size: 0.875rem; color: var(--muted-foreground); }
+
+    .icon { width: 1rem; height: 1rem; display: inline-block; vertical-align: middle; }
+    .icon-lg { width: 1.25rem; height: 1.25rem; }
+    .icon-xl { width: 2rem; height: 2rem; }
+    .icon-2xl { width: 3rem; height: 3rem; }
+
+    .feature-dot { width: 0.5rem; height: 0.5rem; border-radius: 9999px; background-color: var(--muted-foreground); opacity: 0.3; border: none; cursor: pointer; transition: all 0.3s ease; }
+    .feature-dot.active { width: 1.5rem; background-color: var(--primary); opacity: 1; }
+
+    .activity-dot { width: 0.5rem; height: 0.5rem; border-radius: 9999px; margin-top: 0.375rem; flex-shrink: 0; }
+
+    .modal-overlay { position: fixed; inset: 0; background-color: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; z-index: 50; }
+    .modal { background-color: var(--card); border-radius: var(--radius); padding: 1.5rem; max-width: 28rem; width: 90%; max-height: 90vh; overflow-y: auto; }
+    .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+    .modal-title { font-size: 1.125rem; font-weight: 600; }
+
+    .textarea { display: block; width: 100%; border-radius: var(--radius); border: 1px solid var(--input); background-color: transparent; padding: 0.75rem; font-size: 0.875rem; color: var(--foreground); resize: vertical; min-height: 5rem; font-family: inherit; }
+    .textarea:focus { outline: none; border-color: var(--ring); box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2); }
+    .textarea::placeholder { color: var(--muted-foreground); }
+
+    .label { display: block; font-size: 0.875rem; font-weight: 500; color: var(--foreground); margin-bottom: 0.5rem; }
+
+    .scroll-area { overflow-y: auto; }
+    .scroll-area::-webkit-scrollbar { width: 8px; }
+    .scroll-area::-webkit-scrollbar-track { background: transparent; }
+    .scroll-area::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    .scroll-area::-webkit-scrollbar-thumb:hover { background: var(--muted-foreground); }
+
+    .separator { height: 1px; background-color: var(--border); margin: 1rem 0; }
+
+    .hover-elevate { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+    .hover-elevate:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); }
+
+    @keyframes heartbeat { 0%, 100% { transform: scale(1); } 14% { transform: scale(1.06); } 28% { transform: scale(1); } 42% { transform: scale(1.06); } 70% { transform: scale(1); } }
+    .heartbeat { animation: heartbeat 1.5s ease-in-out infinite; }
+
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    .pulse { animation: pulse 2s ease-in-out infinite; }
+
+    .media-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; border-radius: var(--radius); background-color: var(--muted); cursor: pointer; transition: background-color 0.2s ease; }
+    .media-item:hover { background-color: var(--accent); }
+    .media-item.active { background-color: var(--primary); color: var(--primary-foreground); }
+    .media-thumbnail { width: 3rem; height: 3rem; border-radius: var(--radius); object-fit: cover; background-color: var(--border); display: flex; align-items: center; justify-content: center; }
+    .media-info { flex: 1; min-width: 0; }
+    .media-name { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .media-type { font-size: 0.75rem; color: var(--muted-foreground); }
+
+    .sidebar { width: 20rem; background-color: var(--card); border-right: 1px solid var(--border); display: flex; flex-direction: column; height: 100vh; }
+    .sidebar-header { padding: 1rem; border-bottom: 1px solid var(--border); }
+    .sidebar-content { flex: 1; overflow-y: auto; padding: 1rem; }
+    .sidebar-footer { padding: 1rem; border-top: 1px solid var(--border); }
+
+    .preview-container { background-color: #000; border-radius: var(--radius); min-height: 400px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+    .preview-content { color: white; text-align: center; padding: 2rem; }
+  </style>
+</head>
+<body>
+  <!-- LOADING SCREEN -->
+  <div id="loading-screen" class="min-h-screen flex items-center justify-center bg-background">
+    <div class="flex flex-col items-center gap-4">
+      <div class="spinner spinner-lg spinner-primary"></div>
+      <p class="text-muted-foreground">Carregando...</p>
+    </div>
+  </div>
+
+  <!-- LOGIN PAGE -->
+  <div id="login-page" class="hidden min-h-screen bg-gradient-auth flex items-center justify-center p-4">
+    <div class="absolute top-4 right-4">
+      <button class="theme-toggle" onclick="toggleTheme()" data-testid="button-theme-toggle">
+        <svg class="icon-lg" id="theme-icon-sun" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+      </button>
+    </div>
+    
+    <div class="w-full max-w-md">
+      <div class="card card-auth p-8">
+        <div class="text-center mb-8">
+          <div class="icon-circle icon-circle-primary mx-auto mb-4">
+            <svg class="icon-xl text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
+            </svg>
+          </div>
+          <h1 class="text-2xl font-bold text-foreground">Bem-vindo</h1>
+          <p class="text-sm text-muted-foreground mt-1">Entre na sua conta para continuar</p>
+        </div>
+
+        <div id="login-error" class="hidden alert-error mb-6">
+          <svg class="icon-lg alert-error-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <p class="text-sm text-destructive" id="login-error-text"></p>
+        </div>
+
+        <form id="login-form" class="space-y-5">
+          <div class="space-y-2">
+            <label class="label">Email ou Nome de Usuário</label>
+            <div class="relative">
+              <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+              </svg>
+              <input type="text" id="login-identifier" class="input input-h-11 input-with-icon" placeholder="seu@email.com ou usuario" required data-testid="input-login-identifier">
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <div class="flex items-center justify-between gap-2">
+              <label class="label mb-0">Senha</label>
+              <a href="#" onclick="showPage('forgot-password')" class="text-xs link" data-testid="link-forgot-password">Esqueceu a senha?</a>
+            </div>
+            <div class="relative">
+              <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0110 0v4"></path>
+              </svg>
+              <input type="password" id="login-password" class="input input-h-11 input-with-icon input-with-icon-right" placeholder="Digite sua senha" required data-testid="input-login-password">
+              <button type="button" class="input-icon-btn" onclick="togglePasswordVisibility('login-password', this)" data-testid="button-toggle-password">
+                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="switch-container">
+            <button type="button" id="remember-switch" class="switch" onclick="toggleSwitch(this)" data-testid="switch-remember">
+              <span class="switch-thumb"></span>
+            </button>
+            <label class="text-sm text-muted-foreground cursor-pointer">Lembrar-me</label>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-full btn-h-11 font-medium" data-testid="button-login">
+            <span id="login-btn-text" class="flex items-center gap-2">
+              <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
+              </svg>
+              Entrar
+            </span>
+            <span id="login-btn-loading" class="hidden flex items-center gap-2">
+              <span class="spinner"></span>
+              Entrando...
+            </span>
+          </button>
+        </form>
+
+        <div class="mt-6 text-center">
+          <p class="text-sm text-muted-foreground">
+            Não tem uma conta? 
+            <a href="#" onclick="showPage('register')" class="link font-medium" data-testid="link-register">Cadastre-se</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- REGISTER PAGE -->
+  <div id="register-page" class="hidden min-h-screen bg-gradient-auth flex items-center justify-center p-4">
+    <div class="absolute top-4 right-4">
+      <button class="theme-toggle" onclick="toggleTheme()">
+        <svg class="icon-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+      </button>
+    </div>
+    
+    <div class="w-full max-w-lg">
+      <div class="card card-auth p-8" style="max-height: 90vh; overflow-y: auto;">
+        <div class="text-center mb-8">
+          <div class="icon-circle icon-circle-primary mx-auto mb-4">
+            <svg class="icon-xl text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+            </svg>
+          </div>
+          <h1 class="text-2xl font-bold text-foreground">Criar Conta</h1>
+          <p class="text-sm text-muted-foreground mt-1">Preencha os dados abaixo para se cadastrar</p>
+        </div>
+
+        <div id="register-error" class="hidden alert-error mb-6">
+          <svg class="icon-lg alert-error-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <p class="text-sm text-destructive" id="register-error-text"></p>
+        </div>
+
+        <form id="register-form" class="space-y-4">
+          <div class="space-y-2">
+            <label class="label">Email</label>
+            <div class="relative">
+              <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                <polyline points="22,6 12,13 2,6"></polyline>
+              </svg>
+              <input type="email" id="register-email" class="input input-h-11 input-with-icon" placeholder="seu@email.com" required data-testid="input-register-email">
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <label class="label">Nome de Usuário</label>
+            <div class="relative">
+              <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+              </svg>
+              <input type="text" id="register-username" class="input input-h-11 input-with-icon" placeholder="seu_usuario" required data-testid="input-register-username">
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <label class="label">Telefone</label>
+            <div class="relative">
+              <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+              </svg>
+              <input type="tel" id="register-phone" class="input input-h-11 input-with-icon" placeholder="(00) 00000-0000" required data-testid="input-register-phone">
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <label class="label">Senha</label>
+            <div class="relative">
+              <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0110 0v4"></path>
+              </svg>
+              <input type="password" id="register-password" class="input input-h-11 input-with-icon input-with-icon-right" placeholder="Mínimo 6 caracteres" required oninput="updatePasswordStrength()" data-testid="input-register-password">
+              <button type="button" class="input-icon-btn" onclick="togglePasswordVisibility('register-password', this)">
+                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              </button>
+            </div>
+            <div id="password-strength" class="hidden">
+              <div class="password-strength">
+                <div class="password-strength-bar" id="strength-1"></div>
+                <div class="password-strength-bar" id="strength-2"></div>
+                <div class="password-strength-bar" id="strength-3"></div>
+                <div class="password-strength-bar" id="strength-4"></div>
+              </div>
+              <p class="text-xs text-muted-foreground mt-1" id="strength-text"></p>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <label class="label">Confirmar Senha</label>
+            <div class="relative">
+              <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0110 0v4"></path>
+              </svg>
+              <input type="password" id="register-confirm-password" class="input input-h-11 input-with-icon input-with-icon-right" placeholder="Digite a senha novamente" required data-testid="input-register-confirm-password">
+              <button type="button" class="input-icon-btn" onclick="togglePasswordVisibility('register-confirm-password', this)">
+                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="separator"></div>
+
+          <div class="flex items-center gap-2 mb-4">
+            <svg class="icon-lg text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+            <h2 class="font-medium text-foreground">Perguntas de Segurança</h2>
+          </div>
+          <p class="text-xs text-muted-foreground mb-4">
+            Essas perguntas serão usadas para recuperar sua senha caso você a esqueça.
+          </p>
+
+          <div class="space-y-4">
+            <div class="space-y-2">
+              <label class="label">Pergunta 1</label>
+              <select id="security-q1" class="select select-h-11" required data-testid="select-security-q1">
+                <option value="">Selecione uma pergunta</option>
+                <option value="pet">Qual o nome do seu primeiro animal de estimação?</option>
+                <option value="mother">Qual o nome da sua mãe?</option>
+                <option value="city">Em qual cidade você nasceu?</option>
+                <option value="school">Qual o nome da sua primeira escola?</option>
+                <option value="friend">Qual o nome do seu melhor amigo de infância?</option>
+              </select>
+              <input type="text" id="security-a1" class="input input-h-11" placeholder="Sua resposta" required data-testid="input-security-a1">
+            </div>
+
+            <div class="space-y-2">
+              <label class="label">Pergunta 2</label>
+              <select id="security-q2" class="select select-h-11" required data-testid="select-security-q2">
+                <option value="">Selecione uma pergunta</option>
+                <option value="car">Qual o modelo do seu primeiro carro?</option>
+                <option value="movie">Qual o nome do seu filme favorito?</option>
+                <option value="street">Qual o nome da rua onde você cresceu?</option>
+                <option value="food">Qual é o seu prato favorito?</option>
+                <option value="teacher">Qual o nome do seu professor favorito?</option>
+              </select>
+              <input type="text" id="security-a2" class="input input-h-11" placeholder="Sua resposta" required data-testid="input-security-a2">
+            </div>
+
+            <div class="space-y-2">
+              <label class="label">Pergunta 3</label>
+              <select id="security-q3" class="select select-h-11" required data-testid="select-security-q3">
+                <option value="">Selecione uma pergunta</option>
+                <option value="book">Qual o nome do seu livro favorito?</option>
+                <option value="sport">Qual é o seu esporte favorito?</option>
+                <option value="color">Qual é a sua cor favorita?</option>
+                <option value="hero">Quem é o seu herói?</option>
+                <option value="dream">Qual era o seu sonho de infância?</option>
+              </select>
+              <input type="text" id="security-a3" class="input input-h-11" placeholder="Sua resposta" required data-testid="input-security-a3">
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-full btn-h-11 font-medium mt-2" data-testid="button-register">
+            <span id="register-btn-text" class="flex items-center gap-2">
+              <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+              </svg>
+              Criar Conta
+            </span>
+            <span id="register-btn-loading" class="hidden flex items-center gap-2">
+              <span class="spinner"></span>
+              Criando conta...
+            </span>
+          </button>
+        </form>
+
+        <div class="mt-6 text-center">
+          <p class="text-sm text-muted-foreground">
+            Já tem uma conta? 
+            <a href="#" onclick="showPage('login')" class="link font-medium" data-testid="link-login">Faça login</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FORGOT PASSWORD PAGE -->
+  <div id="forgot-password-page" class="hidden min-h-screen bg-gradient-auth flex items-center justify-center p-4">
+    <div class="absolute top-4 right-4">
+      <button class="theme-toggle" onclick="toggleTheme()">
+        <svg class="icon-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+      </button>
+    </div>
+    
+    <div class="w-full max-w-md">
+      <div id="forgot-step-1" class="card card-auth p-8">
+        <div class="text-center mb-8">
+          <div class="icon-circle icon-circle-primary mx-auto mb-4">
+            <svg class="icon-xl text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path>
+            </svg>
+          </div>
+          <h1 class="text-2xl font-bold text-foreground">Recuperar Senha</h1>
+          <p class="text-sm text-muted-foreground mt-1">Informe seu email ou nome de usuário</p>
+        </div>
+
+        <div id="forgot-error-1" class="hidden alert-error mb-6">
+          <svg class="icon-lg alert-error-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <p class="text-sm text-destructive" id="forgot-error-text-1"></p>
+        </div>
+
+        <form id="forgot-form-1" class="space-y-5">
+          <div class="space-y-2">
+            <label class="label">Email ou Nome de Usuário</label>
+            <div class="relative">
+              <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+              </svg>
+              <input type="text" id="forgot-identifier" class="input input-h-11 input-with-icon" placeholder="seu@email.com ou seu_usuario" required data-testid="input-forgot-identifier">
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-full btn-h-11 font-medium" data-testid="button-forgot-continue">
+            <span class="flex items-center gap-2">
+              <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              </svg>
+              Continuar
+            </span>
+          </button>
+        </form>
+
+        <div class="mt-6 text-center">
+          <a href="#" onclick="showPage('login')" class="inline-flex items-center text-sm link" data-testid="link-back-to-login">
+            <svg class="icon mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <line x1="19" y1="12" x2="5" y2="12"></line>
+              <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            Voltar para o login
+          </a>
+        </div>
+      </div>
+
+      <div id="forgot-step-2" class="hidden card card-auth p-8">
+        <div class="text-center mb-8">
+          <div class="icon-circle icon-circle-primary mx-auto mb-4">
+            <svg class="icon-xl text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+          </div>
+          <h1 class="text-2xl font-bold text-foreground">Perguntas de Segurança</h1>
+          <p class="text-sm text-muted-foreground mt-1">Responda às perguntas para verificar sua identidade</p>
+        </div>
+
+        <div id="forgot-error-2" class="hidden alert-error mb-6">
+          <svg class="icon-lg alert-error-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <p class="text-sm text-destructive" id="forgot-error-text-2"></p>
+        </div>
+
+        <form id="forgot-form-2" class="space-y-5">
+          <div class="space-y-2">
+            <label class="label" id="forgot-q1-label">Pergunta 1</label>
+            <input type="text" id="forgot-a1" class="input input-h-11" placeholder="Sua resposta" required data-testid="input-forgot-a1">
+          </div>
+          <div class="space-y-2">
+            <label class="label" id="forgot-q2-label">Pergunta 2</label>
+            <input type="text" id="forgot-a2" class="input input-h-11" placeholder="Sua resposta" required data-testid="input-forgot-a2">
+          </div>
+          <div class="space-y-2">
+            <label class="label" id="forgot-q3-label">Pergunta 3</label>
+            <input type="text" id="forgot-a3" class="input input-h-11" placeholder="Sua resposta" required data-testid="input-forgot-a3">
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-full btn-h-11 font-medium" data-testid="button-verify-answers">
+            Verificar Respostas
+          </button>
+        </form>
+
+        <div class="mt-6 text-center">
+          <a href="#" onclick="forgotStep(1)" class="inline-flex items-center text-sm link">
+            <svg class="icon mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <line x1="19" y1="12" x2="5" y2="12"></line>
+              <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            Voltar
+          </a>
+        </div>
+      </div>
+
+      <div id="forgot-step-3" class="hidden card card-auth p-8">
+        <div class="text-center mb-8">
+          <div class="icon-circle icon-circle-primary mx-auto mb-4">
+            <svg class="icon-xl text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0110 0v4"></path>
+            </svg>
+          </div>
+          <h1 class="text-2xl font-bold text-foreground">Nova Senha</h1>
+          <p class="text-sm text-muted-foreground mt-1">Digite sua nova senha</p>
+        </div>
+
+        <div id="forgot-error-3" class="hidden alert-error mb-6">
+          <svg class="icon-lg alert-error-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <p class="text-sm text-destructive" id="forgot-error-text-3"></p>
+        </div>
+
+        <form id="forgot-form-3" class="space-y-5">
+          <div class="space-y-2">
+            <label class="label">Nova Senha</label>
+            <div class="relative">
+              <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0110 0v4"></path>
+              </svg>
+              <input type="password" id="new-password" class="input input-h-11 input-with-icon input-with-icon-right" placeholder="Mínimo 6 caracteres" required data-testid="input-new-password">
+              <button type="button" class="input-icon-btn" onclick="togglePasswordVisibility('new-password', this)">
+                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <label class="label">Confirmar Nova Senha</label>
+            <div class="relative">
+              <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0110 0v4"></path>
+              </svg>
+              <input type="password" id="confirm-new-password" class="input input-h-11 input-with-icon input-with-icon-right" placeholder="Digite a senha novamente" required data-testid="input-confirm-new-password">
+              <button type="button" class="input-icon-btn" onclick="togglePasswordVisibility('confirm-new-password', this)">
+                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-full btn-h-11 font-medium" data-testid="button-reset-password">
+            Redefinir Senha
+          </button>
+        </form>
+
+        <div class="mt-6 text-center">
+          <a href="#" onclick="forgotStep(2)" class="inline-flex items-center text-sm link">
+            <svg class="icon mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <line x1="19" y1="12" x2="5" y2="12"></line>
+              <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            Voltar
+          </a>
+        </div>
+      </div>
+
+      <div id="forgot-step-4" class="hidden card card-auth p-8 text-center">
+        <div class="icon-circle icon-circle-green mx-auto mb-6">
+          <svg class="icon-xl text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+        </div>
+        
+        <h1 class="text-2xl font-bold text-foreground mb-2">Senha Redefinida</h1>
+        <p class="text-muted-foreground mb-6">
+          Sua senha foi alterada com sucesso. Agora você pode fazer login com sua nova senha.
+        </p>
+        
+        <button onclick="showPage('login')" class="btn btn-primary btn-full" data-testid="button-go-to-login">
+          Ir para o Login
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- USER HOME PAGE -->
+  <div id="user-home-page" class="hidden min-h-screen bg-background relative">
+    <div class="fixed top-2 right-2 z-50 flex items-center gap-1">
+      <button class="theme-toggle" onclick="toggleTheme()">
+        <svg class="icon-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+      </button>
+      <button class="btn btn-ghost btn-sm" onclick="logout()" data-testid="button-logout">
+        <svg class="icon mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+        </svg>
+        Sair
+      </button>
+    </div>
+
+    <main class="max-w-6xl mx-auto p-4 space-y-6">
+      <div class="card p-4 bg-gradient-welcome">
+        <h1 class="text-xl font-bold text-primary" data-testid="text-welcome-title">Bem-vindo a Equipe da Mídia!</h1>
+      </div>
+
+      <div class="card p-6 bg-gradient-primary relative overflow-hidden">
+        <div class="flex flex-col gap-4 relative" style="z-index: 10;">
+          <div class="flex items-center gap-3">
+            <svg class="icon-xl text-yellow-500" id="greeting-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="5"></circle>
+              <line x1="12" y1="1" x2="12" y2="3"></line>
+              <line x1="12" y1="21" x2="12" y2="23"></line>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+              <line x1="1" y1="12" x2="3" y2="12"></line>
+              <line x1="21" y1="12" x2="23" y2="12"></line>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>
+            <h2 class="text-2xl font-bold" id="greeting-text" data-testid="text-greeting">Bom dia, Usuário!</h2>
+          </div>
+          
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <svg class="icon-lg text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path d="M3 21h18M3 7v14M9 7v14M15 7v14M21 7v14M12 3l9 4M12 3L3 7M12 7v4"></path>
+              </svg>
+              <span class="text-muted-foreground" id="church-name-display" data-testid="text-church-name">Clique para definir o nome da sua igreja</span>
+              <button class="btn btn-ghost btn-icon" onclick="editChurchName()" data-testid="button-edit-church">
+                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+              </button>
+            </div>
+            <button class="btn btn-primary btn-lg shrink-0" onclick="showPage('projector-control')" data-testid="button-open-system">
+              <svg class="icon-lg mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                <line x1="8" y1="21" x2="16" y2="21"></line>
+                <line x1="12" y1="17" x2="12" y2="21"></line>
+              </svg>
+              Abrir Sistema
+              <svg class="icon ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div id="announcements-container" class="hidden">
+        <div class="card p-5">
+          <div class="flex items-center gap-3 mb-4">
+            <svg class="icon-lg text-primary pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+            <h3 class="font-bold">Últimas Notícias</h3>
+          </div>
+          <div class="space-y-3" id="announcements-list"></div>
+        </div>
+      </div>
+
+      <div class="card p-6 cursor-pointer hover-elevate" id="feature-carousel" data-testid="card-feature-carousel">
+        <div class="flex items-center gap-4">
+          <div class="inline-flex items-center justify-center w-16 h-16 rounded-lg" id="feature-icon-wrapper" style="background-color: rgba(59, 130, 246, 0.1);">
+            <svg class="icon-xl" id="feature-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #3b82f6;">
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+              <line x1="8" y1="21" x2="16" y2="21"></line>
+              <line x1="12" y1="17" x2="12" y2="21"></line>
+            </svg>
+          </div>
+          <div class="flex-1">
+            <h3 class="text-xl font-semibold mb-1" id="feature-title" data-testid="text-feature-title">Controle do Projetor</h3>
+            <p class="text-muted-foreground" id="feature-description" data-testid="text-feature-description">Gerencie apresentações em tempo real</p>
+          </div>
+        </div>
+      </div>
+      <div class="flex justify-center gap-2 mt-4" id="feature-dots"></div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="card p-5 h-full">
+          <div class="flex items-center gap-3 mb-4">
+            <svg class="icon-lg text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+            </svg>
+            <h3 class="font-bold">Dados da Conta</h3>
+          </div>
+          <div class="space-y-3 text-sm" id="user-info" data-testid="container-user-info"></div>
+        </div>
+
+        <div class="card p-5 h-full">
+          <div class="flex items-center gap-3 mb-4">
+            <svg class="icon-lg text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            <h3 class="font-bold">Atividade Recente</h3>
+          </div>
+          <div class="space-y-3">
+            <div class="flex items-start gap-3 p-3 rounded-lg" style="background-color: var(--muted);">
+              <div class="activity-dot" style="background-color: #22c55e;"></div>
+              <div>
+                <p class="text-sm font-medium">Login realizado</p>
+                <p class="text-xs text-muted-foreground">Agora</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-3 p-3 rounded-lg" style="background-color: var(--muted);">
+              <div class="activity-dot" style="background-color: #3b82f6;"></div>
+              <div>
+                <p class="text-sm font-medium">Sessão iniciada</p>
+                <p class="text-xs text-muted-foreground">Sessão ativa</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card p-5">
+        <div class="flex items-center gap-3 mb-4">
+          <svg class="icon-lg text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"></path>
+          </svg>
+          <h3 class="font-bold">Dicas Rápidas</h3>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+          <div class="p-4 rounded-lg" style="background-color: var(--muted);">
+            <p class="font-medium mb-1">Atalhos de Teclado</p>
+            <p class="text-muted-foreground">Use as setas para navegar entre slides</p>
+          </div>
+          <div class="p-4 rounded-lg" style="background-color: var(--muted);">
+            <p class="font-medium mb-1">Modo Tela Cheia</p>
+            <p class="text-muted-foreground">Pressione F11 para tela cheia</p>
+          </div>
+          <div class="p-4 rounded-lg" style="background-color: var(--muted);">
+            <p class="font-medium mb-1">Suporte</p>
+            <p class="text-muted-foreground">Contate o administrador para ajuda</p>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ADMIN DASHBOARD PAGE -->
+  <div id="admin-page" class="hidden min-h-screen bg-background relative">
+    <div class="fixed top-2 right-2 z-50 flex items-center gap-1">
+      <button class="theme-toggle" onclick="toggleTheme()">
+        <svg class="icon-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+      </button>
+      <button class="btn btn-ghost btn-sm" onclick="logout()" data-testid="button-admin-logout">
+        <svg class="icon mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+        </svg>
+        Sair
+      </button>
+    </div>
+
+    <main class="max-w-7xl mx-auto p-4 space-y-6">
+      <div class="card p-4 bg-gradient-welcome mb-4">
+        <h1 class="text-xl font-bold text-primary">Painel Administrativo</h1>
+        <p class="text-sm text-muted-foreground">Gerencie usuários, anúncios e configurações</p>
+      </div>
+
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="card p-4 stats-card">
+          <div class="stats-icon" style="background-color: rgba(59, 130, 246, 0.1);">
+            <svg class="icon-lg text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+          </div>
+          <div>
+            <p class="text-2xl font-bold" id="stat-users" data-testid="text-stat-users">0</p>
+            <p class="text-xs text-muted-foreground">Total de Usuários</p>
+          </div>
+        </div>
+        
+        <div class="card p-4 stats-card">
+          <div class="stats-icon" style="background-color: rgba(139, 92, 246, 0.1);">
+            <svg class="icon-lg text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+          </div>
+          <div>
+            <p class="text-2xl font-bold" id="stat-admins" data-testid="text-stat-admins">0</p>
+            <p class="text-xs text-muted-foreground">Administradores</p>
+          </div>
+        </div>
+
+        <div class="card p-4 stats-card">
+          <div class="stats-icon" style="background-color: rgba(239, 68, 68, 0.1);">
+            <svg class="icon-lg text-destructive" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0110 0v4"></path>
+            </svg>
+          </div>
+          <div>
+            <p class="text-2xl font-bold" id="stat-blocked" data-testid="text-stat-blocked">0</p>
+            <p class="text-xs text-muted-foreground">Bloqueados</p>
+          </div>
+        </div>
+
+        <div class="card p-4 stats-card">
+          <div class="stats-icon" style="background-color: rgba(34, 197, 94, 0.1);">
+            <svg class="icon-lg text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+            </svg>
+          </div>
+          <div>
+            <p class="text-2xl font-bold" id="stat-logins" data-testid="text-stat-logins">0</p>
+            <p class="text-xs text-muted-foreground">Logins Hoje</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="tabs">
+        <button class="tab active" id="tab-users" onclick="switchAdminTab('users')" data-testid="tab-users">Usuários</button>
+        <button class="tab" id="tab-announcements" onclick="switchAdminTab('announcements')" data-testid="tab-announcements">Notícias</button>
+        <button class="tab" id="tab-logs" onclick="switchAdminTab('logs')" data-testid="tab-logs">Logs</button>
+        <button class="tab" id="tab-support" onclick="switchAdminTab('support')" data-testid="tab-support">Suporte</button>
+      </div>
+
+      <div id="admin-users" class="card p-4">
+        <div class="flex items-center justify-between gap-2 mb-4 flex-wrap">
+          <h2 class="text-lg font-bold">Gerenciamento de Usuários</h2>
+          <button class="btn btn-ghost btn-sm" onclick="loadAdminData()" data-testid="button-refresh-users">
+            <svg class="icon mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <polyline points="23 4 23 10 17 10"></polyline>
+              <polyline points="1 20 1 14 7 14"></polyline>
+              <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"></path>
+            </svg>
+            Atualizar
+          </button>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Usuário</th>
+                <th>Email</th>
+                <th>Perfil</th>
+                <th>Status</th>
+                <th>Criado em</th>
+                <th class="table-text-right">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="users-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="admin-announcements" class="hidden card p-4">
+        <div class="flex items-center justify-between gap-2 mb-4 flex-wrap">
+          <h2 class="text-lg font-bold">Gerenciamento de Notícias</h2>
+          <button class="btn btn-primary btn-sm" onclick="showAnnouncementForm()" data-testid="button-new-announcement">
+            <svg class="icon mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Nova Notícia
+          </button>
+        </div>
+
+        <div id="announcement-form" class="hidden p-4 mb-4 rounded-lg" style="background-color: var(--muted);">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="font-semibold" id="announcement-form-title">Nova Notícia</h3>
+            <button class="btn btn-ghost btn-icon" onclick="hideAnnouncementForm()">
+              <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+          <div class="space-y-4">
+            <div class="space-y-2">
+              <label class="label">Título</label>
+              <input type="text" id="announcement-title" class="input input-h-11" placeholder="Título da notícia" data-testid="input-announcement-title">
+            </div>
+            <div class="space-y-2">
+              <label class="label">Conteúdo</label>
+              <textarea id="announcement-content" class="textarea" placeholder="Conteúdo da notícia" rows="4" data-testid="input-announcement-content"></textarea>
+            </div>
+            <div class="flex justify-end gap-2">
+              <button class="btn btn-ghost" onclick="hideAnnouncementForm()">Cancelar</button>
+              <button class="btn btn-primary" onclick="saveAnnouncement()" data-testid="button-save-announcement">Salvar</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-4" id="announcements-admin-list"></div>
+      </div>
+
+      <div id="admin-logs" class="hidden card p-4">
+        <div class="flex items-center justify-between gap-2 mb-4 flex-wrap">
+          <h2 class="text-lg font-bold">Histórico de Logins</h2>
+          <button class="btn btn-ghost btn-sm" onclick="loadAdminData()">
+            <svg class="icon mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <polyline points="23 4 23 10 17 10"></polyline>
+              <polyline points="1 20 1 14 7 14"></polyline>
+              <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"></path>
+            </svg>
+            Atualizar
+          </button>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Status</th>
+                <th>Email/Usuário</th>
+                <th>IP</th>
+                <th>Data/Hora</th>
+              </tr>
+            </thead>
+            <tbody id="logs-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="admin-support" class="hidden card p-4">
+        <div class="flex items-center justify-between gap-2 mb-4 flex-wrap">
+          <h2 class="text-lg font-bold">Tickets de Suporte</h2>
+        </div>
+        <div class="space-y-4" id="support-tickets-list">
+          <p class="text-muted-foreground text-center py-8">Nenhum ticket de suporte pendente.</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- PROJECTOR CONTROL PAGE -->
+  <div id="projector-control-page" class="hidden min-h-screen bg-background">
+    <div class="flex h-screen">
+      <div class="sidebar">
+        <div class="sidebar-header">
+          <h2 class="font-bold text-lg">Sistema de Projeção</h2>
+          <p class="text-xs text-muted-foreground">Equipe da Mídia</p>
+        </div>
+        
+        <div class="sidebar-content space-y-4">
+          <div class="space-y-2">
+            <h3 class="text-sm font-medium text-muted-foreground">Lista de Reprodução</h3>
+            <div id="playlist-items" class="space-y-2 scroll-area" style="max-height: 300px;">
+              <div class="media-item" onclick="selectMedia(this)" data-testid="media-item-sample">
+                <div class="media-thumbnail">
+                  <svg class="icon text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                    <polyline points="21 15 16 10 5 21"></polyline>
+                  </svg>
+                </div>
+                <div class="media-info">
+                  <p class="media-name">Sem itens</p>
+                  <p class="media-type">Adicione mídia à playlist</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="separator"></div>
+          
+          <div class="space-y-2">
+            <h3 class="text-sm font-medium text-muted-foreground">Galeria</h3>
+            <div id="gallery-items" class="space-y-2 scroll-area" style="max-height: 200px;">
+              <button class="btn btn-outline btn-full" onclick="openMediaUpload()" data-testid="button-upload-media">
+                <svg class="icon mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="17 8 12 3 7 8"></polyline>
+                  <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                Adicionar Mídia
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="sidebar-footer space-y-2">
+          <button class="btn btn-primary btn-full" id="btn-start-presentation" onclick="startPresentation()" data-testid="button-start-presentation">
+            <svg class="icon mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10"></circle>
+              <circle cx="12" cy="12" r="4"></circle>
+            </svg>
+            Iniciar Apresentação
+          </button>
+          <button class="btn btn-outline btn-full" onclick="showPage('user-home')" data-testid="button-back-home">
+            <svg class="icon mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <line x1="19" y1="12" x2="5" y2="12"></line>
+              <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            Voltar
+          </button>
+        </div>
+      </div>
+
+      <div class="flex-1 flex flex-col">
+        <header class="flex items-center justify-between p-4 border-b gap-2">
+          <div class="flex items-center gap-4">
+            <button class="btn btn-ghost btn-icon" onclick="previousSlide()" data-testid="button-previous-slide">
+              <svg class="icon-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <polyline points="19 12 5 12"></polyline>
+                <polyline points="12 19 5 12 12 5"></polyline>
+              </svg>
+            </button>
+            <span id="slide-counter" class="text-sm text-muted-foreground" data-testid="text-slide-counter">0 / 0</span>
+            <button class="btn btn-ghost btn-icon" onclick="nextSlide()" data-testid="button-next-slide">
+              <svg class="icon-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <polyline points="5 12 19 12"></polyline>
+                <polyline points="12 5 19 12 12 19"></polyline>
+              </svg>
+            </button>
+          </div>
+          <div class="flex items-center gap-2">
+            <button class="theme-toggle" onclick="toggleTheme()">
+              <svg class="icon-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="5"></circle>
+                <line x1="12" y1="1" x2="12" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="23"></line>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                <line x1="1" y1="12" x2="3" y2="12"></line>
+                <line x1="21" y1="12" x2="23" y2="12"></line>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+              </svg>
+            </button>
+          </div>
+        </header>
+
+        <main class="flex-1 p-4 overflow-auto">
+          <div class="preview-container h-full">
+            <div id="preview-content" class="preview-content">
+              <p class="text-2xl font-bold mb-2">EQUIPE DA MÍDIA</p>
+              <p class="text-lg" style="color: rgba(255,255,255,0.7);">MODO ESPERA - AGUARDANDO CONTEÚDO</p>
+            </div>
+          </div>
+        </main>
+
+        <footer class="p-4 border-t">
+          <div class="flex items-center justify-between gap-4 flex-wrap">
+            <div class="flex items-center gap-4">
+              <div class="slider-container" style="width: 150px;">
+                <svg class="icon text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                </svg>
+                <input type="range" class="slider" min="0" max="100" value="80" id="volume-slider" data-testid="slider-volume">
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <button class="btn btn-ghost btn-icon" id="btn-dark-screen" onclick="toggleDarkScreen()" data-testid="button-dark-screen">
+                <svg class="icon-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+              </button>
+              <button class="btn btn-ghost btn-icon" id="btn-black-screen" onclick="toggleBlackScreen()" data-testid="button-black-screen">
+                <svg class="icon-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </footer>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROJECTOR VIEW (Full Screen) -->
+  <div id="projector-view" class="hidden projector-screen">
+    <div id="projector-waiting" class="projector-content">
+      <p class="projector-text" id="projector-title">EQUIPE DA MÍDIA</p>
+      <p class="projector-subtitle" id="projector-subtitle">MODO ESPERA - AGUARDANDO CONTEÚDO</p>
+    </div>
+    <img id="projector-image" class="hidden projector-media" src="" alt="">
+    <video id="projector-video" class="hidden projector-media" autoplay></video>
+    <div id="projector-text-slide" class="hidden w-full h-full flex items-center justify-center"></div>
+  </div>
+
+  <!-- TOAST CONTAINER -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <script>
+    // Firebase Configuration (substitua com suas credenciais)
+    const firebaseConfig = {
+      apiKey: "AIzaSyBu9mx_tbiOApVibBe-gxE7U2ZyeOG-xp0",
+      authDomain: "projetor-96eac.firebaseapp.com",
+      projectId: "projetor-96eac",
+      storageBucket: "projetor-96eac.firebasestorage.app",
+      appId: "1:165650772299:web:762486a6b8285c763e78ce"
+    };
+
+    // Initialize Firebase
+    let db;
+    try {
+      firebase.initializeApp(firebaseConfig);
+      db = firebase.firestore();
+    } catch (e) {
+      console.log('Firebase not configured yet - running in demo mode');
+    }
+
+    // App State
+    let currentUser = null;
+    let currentTheme = localStorage.getItem('theme') || 'light';
+    let currentPage = 'login';
+    let featureIndex = 0;
+    let playlistItems = [];
+    let currentSlideIndex = 0;
+    let projectorWindow = null;
+    let presentationActive = false;
+
+    const features = [
+      { icon: 'projector', title: 'Controle do Projetor', description: 'Gerencie apresentações em tempo real', color: '#3b82f6' },
+      { icon: 'image', title: 'Galeria de Mídia', description: 'Organize imagens e vídeos', color: '#22c55e' },
+      { icon: 'list', title: 'Playlists', description: 'Crie listas para apresentações', color: '#a855f7' },
+      { icon: 'palette', title: 'Personalização', description: 'Configure temas e estilos', color: '#f97316' }
+    ];
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      applyTheme(currentTheme);
+      checkAuth();
+      startFeatureCarousel();
+      setupFormHandlers();
+      setupKeyboardShortcuts();
+    });
+
+    // Theme Management
+    function toggleTheme() {
+      currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+      localStorage.setItem('theme', currentTheme);
+      applyTheme(currentTheme);
+    }
+
+    function applyTheme(theme) {
+      document.documentElement.classList.toggle('dark', theme === 'dark');
+    }
+
+    // Page Navigation
+    function showPage(pageName) {
+      const pages = ['loading-screen', 'login-page', 'register-page', 'forgot-password-page', 'user-home-page', 'admin-page', 'projector-control-page', 'projector-view'];
+      pages.forEach(page => {
+        const el = document.getElementById(page);
+        if (el) el.classList.add('hidden');
+      });
+
+      const targetPage = document.getElementById(pageName + '-page') || document.getElementById(pageName);
+      if (targetPage) {
+        targetPage.classList.remove('hidden');
+        currentPage = pageName;
+      }
+
+      if (pageName === 'user-home') {
+        updateUserHome();
+      } else if (pageName === 'admin') {
+        loadAdminData();
+      }
+    }
+
+    // Authentication
+    function checkAuth() {
+      const user = localStorage.getItem('user');
+      if (user) {
+        currentUser = JSON.parse(user);
+        if (currentUser.role === 'admin') {
+          showPage('admin');
+        } else {
+          showPage('user-home');
+        }
+      } else {
+        showPage('login');
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem('user');
+      localStorage.removeItem('token');
+      currentUser = null;
+      showToast('Desconectado', 'Você foi desconectado com sucesso');
+      showPage('login');
+    }
+
+    // Form Handlers
+    function setupFormHandlers() {
+      document.getElementById('login-form').addEventListener('submit', handleLogin);
+      document.getElementById('register-form').addEventListener('submit', handleRegister);
+      document.getElementById('forgot-form-1').addEventListener('submit', handleForgotStep1);
+      document.getElementById('forgot-form-2').addEventListener('submit', handleForgotStep2);
+      document.getElementById('forgot-form-3').addEventListener('submit', handleForgotStep3);
+      document.getElementById('register-phone').addEventListener('input', formatPhoneInput);
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      const identifier = document.getElementById('login-identifier').value;
+      const password = document.getElementById('login-password').value;
+
+      showLoginLoading(true);
+      hideError('login-error');
+
+      // Demo login (replace with Firebase Auth)
+      setTimeout(() => {
+        if (identifier && password.length >= 6) {
+          const user = {
+            id: 1,
+            email: identifier.includes('@') ? identifier : identifier + '@example.com',
+            username: identifier.includes('@') ? identifier.split('@')[0] : identifier,
+            role: identifier === 'admin' ? 'admin' : 'user',
+            createdAt: new Date().toISOString()
+          };
+          
+          localStorage.setItem('user', JSON.stringify(user));
+          currentUser = user;
+          showToast('Login realizado', `Bem-vindo, ${user.username}!`);
+          
+          if (user.role === 'admin') {
+            showPage('admin');
+          } else {
+            showPage('user-home');
+          }
+        } else {
+          showError('login-error', 'Credenciais inválidas. Senha deve ter pelo menos 6 caracteres.');
+        }
+        showLoginLoading(false);
+      }, 1000);
+    }
+
+    async function handleRegister(e) {
+      e.preventDefault();
+      const email = document.getElementById('register-email').value;
+      const username = document.getElementById('register-username').value;
+      const phone = document.getElementById('register-phone').value;
+      const password = document.getElementById('register-password').value;
+      const confirmPassword = document.getElementById('register-confirm-password').value;
+
+      hideError('register-error');
+
+      if (password !== confirmPassword) {
+        showError('register-error', 'As senhas não coincidem');
+        return;
+      }
+
+      if (password.length < 6) {
+        showError('register-error', 'Senha deve ter pelo menos 6 caracteres');
+        return;
+      }
+
+      showRegisterLoading(true);
+
+      setTimeout(() => {
+        const user = {
+          id: Date.now(),
+          email: email,
+          username: username,
+          role: 'user',
+          createdAt: new Date().toISOString()
+        };
+        
+        localStorage.setItem('user', JSON.stringify(user));
+        currentUser = user;
+        showToast('Conta criada', 'Bem-vindo ao sistema!');
+        showPage('user-home');
+        showRegisterLoading(false);
+      }, 1000);
+    }
+
+    function handleForgotStep1(e) {
+      e.preventDefault();
+      const identifier = document.getElementById('forgot-identifier').value;
+      if (identifier) {
+        document.getElementById('forgot-q1-label').textContent = 'Qual o nome do seu primeiro animal de estimação?';
+        document.getElementById('forgot-q2-label').textContent = 'Qual o modelo do seu primeiro carro?';
+        document.getElementById('forgot-q3-label').textContent = 'Qual o nome do seu livro favorito?';
+        forgotStep(2);
+      }
+    }
+
+    function handleForgotStep2(e) {
+      e.preventDefault();
+      forgotStep(3);
+    }
+
+    function handleForgotStep3(e) {
+      e.preventDefault();
+      const newPassword = document.getElementById('new-password').value;
+      const confirmPassword = document.getElementById('confirm-new-password').value;
+
+      if (newPassword !== confirmPassword) {
+        showError('forgot-error-3', 'As senhas não coincidem');
+        return;
+      }
+
+      if (newPassword.length < 6) {
+        showError('forgot-error-3', 'Senha deve ter pelo menos 6 caracteres');
+        return;
+      }
+
+      forgotStep(4);
+      showToast('Senha alterada', 'Sua senha foi redefinida com sucesso');
+    }
+
+    function forgotStep(step) {
+      for (let i = 1; i <= 4; i++) {
+        document.getElementById('forgot-step-' + i).classList.add('hidden');
+      }
+      document.getElementById('forgot-step-' + step).classList.remove('hidden');
+    }
+
+    // UI Helpers
+    function showLoginLoading(show) {
+      document.getElementById('login-btn-text').classList.toggle('hidden', show);
+      document.getElementById('login-btn-loading').classList.toggle('hidden', !show);
+    }
+
+    function showRegisterLoading(show) {
+      document.getElementById('register-btn-text').classList.toggle('hidden', show);
+      document.getElementById('register-btn-loading').classList.toggle('hidden', !show);
+    }
+
+    function showError(elementId, message) {
+      const errorEl = document.getElementById(elementId);
+      const textEl = document.getElementById(elementId + '-text');
+      errorEl.classList.remove('hidden');
+      textEl.textContent = message;
+    }
+
+    function hideError(elementId) {
+      document.getElementById(elementId).classList.add('hidden');
+    }
+
+    function togglePasswordVisibility(inputId, button) {
+      const input = document.getElementById(inputId);
+      input.type = input.type === 'password' ? 'text' : 'password';
+    }
+
+    function toggleSwitch(element) {
+      element.classList.toggle('active');
+    }
+
+    function formatPhoneInput(e) {
+      let value = e.target.value.replace(/\D/g, '');
+      if (value.length <= 2) {
+        e.target.value = value;
+      } else if (value.length <= 7) {
+        e.target.value = `(${value.slice(0, 2)}) ${value.slice(2)}`;
+      } else if (value.length <= 11) {
+        e.target.value = `(${value.slice(0, 2)}) ${value.slice(2, 7)}-${value.slice(7)}`;
+      } else {
+        e.target.value = `(${value.slice(0, 2)}) ${value.slice(2, 7)}-${value.slice(7, 11)}`;
+      }
+    }
+
+    function updatePasswordStrength() {
+      const password = document.getElementById('register-password').value;
+      const container = document.getElementById('password-strength');
+      const textEl = document.getElementById('strength-text');
+      
+      if (password.length === 0) {
+        container.classList.add('hidden');
+        return;
+      }
+      
+      container.classList.remove('hidden');
+      let level = 0;
+      
+      if (password.length >= 6) level = 1;
+      if (password.length >= 8) level = 2;
+      if (password.length >= 10 && /[A-Z]/.test(password) && /[0-9]/.test(password)) level = 3;
+      if (password.length >= 10 && /[A-Z]/.test(password) && /[0-9]/.test(password) && /[^A-Za-z0-9]/.test(password)) level = 4;
+      
+      const texts = ['', 'Muito fraca', 'Fraca', 'Média', 'Forte'];
+      textEl.textContent = texts[level];
+      
+      for (let i = 1; i <= 4; i++) {
+        const bar = document.getElementById('strength-' + i);
+        bar.className = 'password-strength-bar';
+        if (i <= level) {
+          bar.classList.add('active-' + level);
+        }
+      }
+    }
+
+    // User Home
+    function updateUserHome() {
+      if (!currentUser) return;
+      
+      const hour = new Date().getHours();
+      let greeting = 'Bom dia';
+      if (hour >= 12 && hour < 18) greeting = 'Boa tarde';
+      else if (hour >= 18 || hour < 5) greeting = 'Boa noite';
+      
+      document.getElementById('greeting-text').textContent = `${greeting}, ${currentUser.username}!`;
+      
+      const userInfo = document.getElementById('user-info');
+      userInfo.innerHTML = `
+        <div class="flex justify-between py-2 border-b" style="border-color: var(--border);">
+          <span class="text-muted-foreground">Email</span>
+          <span class="font-medium">${currentUser.email}</span>
+        </div>
+        <div class="flex justify-between py-2 border-b" style="border-color: var(--border);">
+          <span class="text-muted-foreground">Usuário</span>
+          <span class="font-medium">${currentUser.username}</span>
+        </div>
+        <div class="flex justify-between py-2 border-b" style="border-color: var(--border);">
+          <span class="text-muted-foreground">Tipo</span>
+          <span class="font-medium">${currentUser.role === 'admin' ? 'Administrador' : 'Usuário Regular'}</span>
+        </div>
+        <div class="flex justify-between py-2">
+          <span class="text-muted-foreground">Membro desde</span>
+          <span class="font-medium">${new Date(currentUser.createdAt).toLocaleDateString('pt-BR')}</span>
+        </div>
+      `;
+    }
+
+    function editChurchName() {
+      const name = prompt('Nome da Igreja:', localStorage.getItem('churchName') || '');
+      if (name) {
+        localStorage.setItem('churchName', name);
+        document.getElementById('church-name-display').textContent = name;
+        showToast('Salvo', 'Nome da igreja atualizado');
+      }
+    }
+
+    // Feature Carousel
+    function startFeatureCarousel() {
+      updateFeature();
+      setInterval(() => {
+        featureIndex = (featureIndex + 1) % features.length;
+        updateFeature();
+      }, 3000);
+    }
+
+    function updateFeature() {
+      const feature = features[featureIndex];
+      document.getElementById('feature-title').textContent = feature.title;
+      document.getElementById('feature-description').textContent = feature.description;
+      document.getElementById('feature-icon-wrapper').style.backgroundColor = feature.color + '1a';
+      document.getElementById('feature-icon').style.color = feature.color;
+      
+      const dotsContainer = document.getElementById('feature-dots');
+      dotsContainer.innerHTML = features.map((_, i) => 
+        `<button class="feature-dot ${i === featureIndex ? 'active' : ''}" onclick="setFeature(${i})"></button>`
+      ).join('');
+    }
+
+    function setFeature(index) {
+      featureIndex = index;
+      updateFeature();
+    }
+
+    // Admin Dashboard
+    function switchAdminTab(tab) {
+      const tabs = ['users', 'announcements', 'logs', 'support'];
+      tabs.forEach(t => {
+        document.getElementById('tab-' + t).classList.remove('active');
+        document.getElementById('admin-' + t).classList.add('hidden');
+      });
+      document.getElementById('tab-' + tab).classList.add('active');
+      document.getElementById('admin-' + tab).classList.remove('hidden');
+    }
+
+    function loadAdminData() {
+      // Demo data
+      const users = [
+        { id: 1, username: 'admin', email: 'admin@example.com', role: 'admin', isBlocked: false, createdAt: new Date().toISOString() },
+        { id: 2, username: 'usuario1', email: 'user1@example.com', role: 'user', isBlocked: false, createdAt: new Date().toISOString() },
+        { id: 3, username: 'usuario2', email: 'user2@example.com', role: 'user', isBlocked: true, createdAt: new Date().toISOString() },
+      ];
+      
+      document.getElementById('stat-users').textContent = users.length;
+      document.getElementById('stat-admins').textContent = users.filter(u => u.role === 'admin').length;
+      document.getElementById('stat-blocked').textContent = users.filter(u => u.isBlocked).length;
+      document.getElementById('stat-logins').textContent = '5';
+      
+      renderUsersTable(users);
+      renderLogsTable();
+    }
+
+    function renderUsersTable(users) {
+      const tbody = document.getElementById('users-table-body');
+      tbody.innerHTML = users.map(u => `
+        <tr>
+          <td class="font-medium">${u.username}</td>
+          <td class="text-muted-foreground">${u.email}</td>
+          <td><span class="badge ${u.role === 'admin' ? 'badge-default' : 'badge-secondary'}">${u.role === 'admin' ? 'Admin' : 'Usuário'}</span></td>
+          <td><span class="badge ${u.isBlocked ? 'badge-destructive' : 'badge-success'}">${u.isBlocked ? 'Bloqueado' : 'Ativo'}</span></td>
+          <td class="text-muted-foreground">${new Date(u.createdAt).toLocaleDateString('pt-BR')}</td>
+          <td class="table-text-right">
+            ${u.id !== currentUser?.id ? `
+              <button class="btn btn-ghost btn-sm ${u.isBlocked ? 'text-green-500' : 'text-destructive'}" onclick="toggleUserBlock(${u.id}, ${u.isBlocked})">
+                ${u.isBlocked ? 'Desbloquear' : 'Bloquear'}
+              </button>
+            ` : '<span class="text-xs text-muted-foreground">Você</span>'}
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function renderLogsTable() {
+      const tbody = document.getElementById('logs-table-body');
+      const logs = [
+        { success: true, identifier: 'admin@example.com', ip: '192.168.1.1', date: new Date().toISOString() },
+        { success: true, identifier: 'user1@example.com', ip: '192.168.1.2', date: new Date(Date.now() - 3600000).toISOString() },
+        { success: false, identifier: 'hacker@bad.com', ip: '10.0.0.1', date: new Date(Date.now() - 7200000).toISOString() },
+      ];
+      
+      tbody.innerHTML = logs.map(l => `
+        <tr>
+          <td><span class="badge ${l.success ? 'badge-success' : 'badge-destructive'}">${l.success ? 'Sucesso' : 'Falhou'}</span></td>
+          <td class="font-medium">${l.identifier}</td>
+          <td class="text-muted-foreground">${l.ip}</td>
+          <td class="text-muted-foreground">${new Date(l.date).toLocaleString('pt-BR')}</td>
+        </tr>
+      `).join('');
+    }
+
+    function toggleUserBlock(userId, isBlocked) {
+      showToast('Atualizado', isBlocked ? 'Usuário desbloqueado' : 'Usuário bloqueado');
+      loadAdminData();
+    }
+
+    function showAnnouncementForm() {
+      document.getElementById('announcement-form').classList.remove('hidden');
+      document.getElementById('announcement-form-title').textContent = 'Nova Notícia';
+    }
+
+    function hideAnnouncementForm() {
+      document.getElementById('announcement-form').classList.add('hidden');
+      document.getElementById('announcement-title').value = '';
+      document.getElementById('announcement-content').value = '';
+    }
+
+    function saveAnnouncement() {
+      const title = document.getElementById('announcement-title').value;
+      const content = document.getElementById('announcement-content').value;
+      
+      if (!title || !content) {
+        showToast('Erro', 'Preencha todos os campos');
+        return;
+      }
+      
+      showToast('Salvo', 'Notícia publicada com sucesso');
+      hideAnnouncementForm();
+    }
+
+    // Projector Control
+    function startPresentation() {
+      presentationActive = !presentationActive;
+      const btn = document.getElementById('btn-start-presentation');
+      
+      if (presentationActive) {
+        btn.innerHTML = `
+          <svg class="icon mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10"></circle>
+            <rect x="9" y="9" width="6" height="6"></rect>
+          </svg>
+          Encerrar Apresentação
+        `;
+        btn.classList.remove('btn-primary');
+        btn.classList.add('btn-destructive');
+        showToast('Apresentação', 'Apresentação iniciada');
+      } else {
+        btn.innerHTML = `
+          <svg class="icon mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10"></circle>
+            <circle cx="12" cy="12" r="4"></circle>
+          </svg>
+          Iniciar Apresentação
+        `;
+        btn.classList.add('btn-primary');
+        btn.classList.remove('btn-destructive');
+        showToast('Apresentação', 'Apresentação encerrada');
+      }
+    }
+
+    function previousSlide() {
+      if (currentSlideIndex > 0) {
+        currentSlideIndex--;
+        updateSlideCounter();
+        showToast('Navegação', 'Slide anterior');
+      }
+    }
+
+    function nextSlide() {
+      if (currentSlideIndex < Math.max(playlistItems.length - 1, 0)) {
+        currentSlideIndex++;
+        updateSlideCounter();
+        showToast('Navegação', 'Próximo slide');
+      }
+    }
+
+    function updateSlideCounter() {
+      document.getElementById('slide-counter').textContent = `${currentSlideIndex + 1} / ${Math.max(playlistItems.length, 1)}`;
+    }
+
+    function toggleDarkScreen() {
+      showToast('Telão', 'Modo escuro ativado');
+    }
+
+    function toggleBlackScreen() {
+      showToast('Telão', 'Tela preta ativada');
+    }
+
+    function selectMedia(element) {
+      document.querySelectorAll('.media-item').forEach(el => el.classList.remove('active'));
+      element.classList.add('active');
+    }
+
+    function openMediaUpload() {
+      showToast('Upload', 'Funcionalidade de upload será implementada com Firebase Storage');
+    }
+
+    // Keyboard Shortcuts
+    function setupKeyboardShortcuts() {
+      document.addEventListener('keydown', (e) => {
+        if (currentPage === 'projector-control') {
+          if (e.key === 'ArrowLeft') previousSlide();
+          if (e.key === 'ArrowRight') nextSlide();
+          if (e.key === 'Escape') toggleBlackScreen();
+          if (e.key === 'b' || e.key === 'B') toggleBlackScreen();
+          if (e.key === 'd' || e.key === 'D') toggleDarkScreen();
+        }
+      });
+    }
+
+    // Toast Notifications
+    function showToast(title, description) {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.innerHTML = `
+        <div class="toast-title">${title}</div>
+        <div class="toast-description">${description}</div>
+      `;
+      container.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(100%)';
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    // Load church name from storage
+    const savedChurchName = localStorage.getItem('churchName');
+    if (savedChurchName) {
+      document.getElementById('church-name-display').textContent = savedChurchName;
+    }
+  </script>
+</body>
+</html>
